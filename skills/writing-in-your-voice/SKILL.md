@@ -51,14 +51,22 @@ Exit code 0 means it passed. Anything else means you are not finished.
 ## What the numbers mean
 
 `Voice distance` aggregates three things. Delta is the function-word
-distribution, which is the strongest single signal that a particular person
-wrote something. Scalars are rhythm, punctuation and register. N-grams are
-character sequences.
+distribution, standardised against how much each word varies between authors.
+Scalars are rhythm, punctuation and register. N-grams are character sequences.
 
 - under 0.9, close
 - 0.9 to 1.5, acceptable
-- 1.5 to 2.7, drifting, and a reader who knows them would notice
+- 1.5 to 2.7, drifting
 - above 2.7, off
+
+**These bands are uncalibrated.** They are useful for comparing two drafts of
+the same thing and unreliable as a pass mark. A stranger can land inside them.
+If you need certainty, compare drafts against each other rather than against
+the threshold.
+
+Two things make the numbers untrustworthy, and the report says so when either
+applies. A draft under 800 words cannot be scored on function words at all. A
+profile under 2,500 words cannot identify anyone. See `docs/calibration.md`.
 
 A high Delta with low scalars is the dangerous case: surface habits copied,
 underlying grammar not theirs. Rewrite rather than edit.

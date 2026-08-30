@@ -29,25 +29,44 @@ class Feature:
     fn: Callable[[Doc], object]
     unit: str = ""
     doc: str = ""
+    group: str = ""
 
 
 _REGISTRY: dict[str, Feature] = {}
 
 
 def feature(name: str, family: str, kind: Kind, elasticity: float,
-            unit: str = "", doc: str = ""):
-    """Register an extractor."""
+            unit: str = "", doc: str = "", group: str = ""):
+    """Register an extractor.
+
+    `group` names a correlated cluster. Features sharing one measure the same
+    underlying habit from different angles, so the distance counts the group
+    once rather than once per feature.
+    """
     def wrap(fn):
         if name in _REGISTRY:
             raise ValueError(f"duplicate feature {name!r}")
         _REGISTRY[name] = Feature(name, family, kind, elasticity, fn, unit,
-                                  doc or (fn.__doc__ or "").strip())
+                                  doc or (fn.__doc__ or "").strip(),
+                                  group or name)
         return fn
     return wrap
 
 
 def registry() -> dict[str, Feature]:
     return dict(_REGISTRY)
+
+
+def group_of(name: str) -> str:
+    f = _REGISTRY.get(name)
+    return f.group if f else name
+
+
+def groups() -> dict[str, list[str]]:
+    out: dict[str, list[str]] = {}
+    for f in _REGISTRY.values():
+        out.setdefault(f.group, []).append(f.name)
+    return out
 
 
 def by_family(family: str) -> list[Feature]:

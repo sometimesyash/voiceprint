@@ -14,6 +14,13 @@ from . import text as T
 FAIL_Z = 2.5
 WARN_Z = 1.5
 
+# Below this the function-word figures are noise: measured attribution
+# accuracy on 400-word passages is 28% even against a large profile, against
+# 92% at 6,400 words. Short drafts are still checked on rhythm and
+# punctuation, but the distance is reported as unreliable.
+RELIABLE_WORDS = 800
+MIN_WORDS = 40
+
 # A rate that is zero in the profile and tiny in the draft is not evidence of
 # anything. One question mark in nine hundred words should not fail a check
 # just because the sample happened not to contain one.
@@ -51,11 +58,16 @@ class Report:
         return [f for f in self.findings if f.severity == "FAIL"]
 
     @property
+    def reliable(self) -> bool:
+        return self.words >= RELIABLE_WORDS
+
+    @property
     def passed(self) -> bool:
         return not self.failures
 
     def as_dict(self) -> dict:
         return {"words": self.words, "passed": self.passed,
+                "reliable": self.reliable,
                 "distance": self.distance.as_dict(),
                 "findings": [f.as_dict() for f in self.findings]}
 
@@ -64,6 +76,11 @@ class Report:
         L = [f"Voice distance {d.overall:.2f} ({d.verdict()}). "
              f"Delta {d.delta:.2f}, scalars {d.scalar:.2f}, "
              f"n-grams {d.ngram:.2f}.", ""]
+        if not d.calibrated:
+            L.append("No between-author reference was found, so the Delta "
+                     "figure is a frequency-weighted distance rather than "
+                     "Burrows's Delta. Treat it as comparative only.")
+            L.append("")
         if not self.findings:
             L.append("Nothing to flag.")
             return "\n".join(L)
@@ -111,16 +128,29 @@ def against_profile(draft: str, profile: Profile) -> Report:
     report = Report(distance=dist, words=doc.n_words)
     reg = registry()
 
-    if doc.n_words < 40:
+    if doc.n_words < MIN_WORDS:
         report.findings.append(Finding(
             "WARN", "length",
-            f"Only {doc.n_words} words. Too short to measure reliably."))
+            f"Only {doc.n_words} words. Too short to measure."))
         return report
+
+    if doc.n_words < RELIABLE_WORDS:
+        report.findings.append(Finding(
+            "NOTE", "length",
+            f"{doc.n_words} words. Below {RELIABLE_WORDS} the function-word "
+            f"distance is unreliable, so the verdict rests mainly on rhythm "
+            f"and punctuation.",
+            "Judge this comparatively, against another draft, rather than "
+            "against the threshold."))
 
     for dev in dist.worst:
         if abs(dev.z) < WARN_Z:
             continue
         if not _material(dev.feature, dev.observed, dev.expected):
+            continue
+        # Stacked fragments get their own finding below, with the offending
+        # paragraph quoted. Reporting them here too says the same thing twice.
+        if dev.feature == "shape.stacked_rate":
             continue
         sev = "FAIL" if abs(dev.z) >= FAIL_Z else "WARN"
         f = reg.get(dev.feature)

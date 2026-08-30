@@ -22,17 +22,32 @@ TARGET_WINDOWS = 8
 
 @dataclass
 class Estimate:
-    """One feature's centre, spread and support."""
+    """One feature's centre, spread and support.
+
+    `overlap` records how much the windows behind this shared content. Windows
+    that overlap are not independent observations, so `effective_n` discounts
+    the count accordingly and everything downstream reads that rather than the
+    raw one.
+    """
     mean: float
     sd: float
     n: int
+    overlap: float = 0.0
+
+    @property
+    def effective_n(self) -> float:
+        """Independent-equivalent support."""
+        return round(self.n * (1.0 - min(max(self.overlap, 0.0), 0.9)), 2)
 
     def as_dict(self) -> dict:
-        return {"mean": self.mean, "sd": self.sd, "n": self.n}
+        d = {"mean": self.mean, "sd": self.sd, "n": self.n}
+        if self.overlap:
+            d["overlap"] = self.overlap
+        return d
 
     @classmethod
     def from_dict(cls, d: dict) -> "Estimate":
-        return cls(d["mean"], d["sd"], d["n"])
+        return cls(d["mean"], d["sd"], d["n"], d.get("overlap", 0.0))
 
 
 def window_size(total_words: int) -> int:
@@ -112,29 +127,9 @@ def windows(texts: list[str], size: int | None = None,
         start = max(moved, start + 1)
     return [w for w in out if w.strip()]
 
-    out: list[str] = []
-    start = 0
-    while start < len(blocks):
-        buf: list[str] = []
-        count = 0
-        i = start
-        while i < len(blocks) and (count < size or not buf):
-            buf.append(blocks[i][0])
-            count += blocks[i][1]
-            i += 1
-        if count >= min(MIN_WINDOW, total) or not out:
-            out.append("\n\n".join(buf))
-        if i >= len(blocks):
-            break
-        advance, moved = 0, start
-        while moved < len(blocks) and advance < step:
-            advance += blocks[moved][1]
-            moved += 1
-        start = max(moved, start + 1)
-    return [w for w in out if w.strip()]
 
-
-def aggregate(chunks: list[str]) -> tuple[dict[str, Estimate], dict[str, str]]:
+def aggregate(chunks: list[str],
+              overlap: float = 0.0) -> tuple[dict[str, Estimate], dict[str, str]]:
     """Measure every scalar per window, then summarise. Categoricals take a vote."""
     docs = [Doc(c) for c in chunks]
     scalars: dict[str, list[float]] = {}
@@ -150,7 +145,8 @@ def aggregate(chunks: list[str]) -> tuple[dict[str, Estimate], dict[str, str]]:
             else:
                 scalars.setdefault(name, []).append(float(v))
 
-    est = {k: Estimate(S.mean(v), S.sd(v), len(v)) for k, v in scalars.items()}
+    est = {k: Estimate(S.mean(v), S.sd(v), len(v), overlap)
+           for k, v in scalars.items()}
     dom = {k: c.most_common(1)[0][0] for k, c in cats.items()}
     return est, dom
 

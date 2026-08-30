@@ -13,12 +13,12 @@ SPELLED = set(
     "fifty sixty seventy eighty ninety hundred thousand million billion".split())
 
 
-@feature("num.digits_per100", "numerals", "scalar", FIRM, "per 100w")
+@feature("num.digits_per100", "numerals", "scalar", FIRM, "per 100w", group="numerals")
 def _digits(d: Doc) -> float:
     return S.per100(len(re.findall(r"\b\d", d.clean)), d.n_words)
 
 
-@feature("num.spelled_rate", "numerals", "scalar", CONVENTION, "0-1")
+@feature("num.spelled_rate", "numerals", "scalar", CONVENTION, "0-1", group="numerals")
 def _spelled(d: Doc) -> float:
     """Words against digits for small numbers."""
     spelled = sum(1 for w in d.words if w in SPELLED)
@@ -26,7 +26,7 @@ def _spelled(d: Doc) -> float:
     return S.rate(spelled, spelled + digits)
 
 
-@feature("num.percent_style", "numerals", "categorical", CONVENTION)
+@feature("num.percent_style", "numerals", "categorical", CONVENTION, group="numerals")
 def _percent(d: Doc) -> str:
     """symbol | word | none"""
     sym = d.clean.count("%")
@@ -41,7 +41,7 @@ def _currency(d: Doc) -> float:
     return S.per100(len(re.findall(r"[$\u00a3\u20ac]\s?\d", d.clean)), d.n_words)
 
 
-@feature("num.abbreviated_magnitude_rate", "numerals", "scalar", CONVENTION, "0-1")
+@feature("num.abbreviated_magnitude_rate", "numerals", "scalar", CONVENTION, "0-1", group="numerals")
 def _magnitude(d: Doc) -> float:
     """5k against 5,000."""
     abbrev = len(re.findall(r"\d\s?(?:k|m|bn|tn)\b", d.lower))

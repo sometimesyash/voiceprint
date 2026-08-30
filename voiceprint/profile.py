@@ -19,9 +19,12 @@ from .features.lexical import (char_ngram_profile, function_word_vector,
 
 SCHEMA = 1
 
-STABLE_WORDS = 5000
-USABLE_WORDS = 2000
-THIN_WORDS = 400
+# Set from scripts/calibrate.py, which measures held-out attribution accuracy
+# against 24 authors. The tiers name what the profile can actually resolve
+# rather than what would be convenient. See docs/calibration.md.
+STABLE_WORDS = 20000
+USABLE_WORDS = 10000
+THIN_WORDS = 2500
 
 
 def confidence(words: int) -> str:
@@ -35,13 +38,17 @@ def confidence(words: int) -> str:
 
 
 CONFIDENCE_NOTE = {
-    "stable": "Enough writing for the frequency measures to hold.",
-    "usable": "Workable, though the rarer measures still carry noise.",
-    "thin": "Below the point where frequency figures settle. Treat the "
-            "rhythm and punctuation numbers as indicative.",
+    "stable": "Enough writing for the function-word measures to hold. In "
+              "testing this size resolved the right author about 90% of the "
+              "time on long passages.",
+    "usable": "Workable. Around 70 to 80% correct on long passages in "
+              "testing, lower on anything short.",
+    "thin": "Below the size where frequency measures settle. Roughly 45% "
+            "correct in testing, so the rhythm and punctuation figures are "
+            "worth more here than the function-word distance.",
     "provisional": "Too little writing to measure properly. Structure is "
-                   "recorded, but the numbers should not be trusted on their "
-                   "own.",
+                   "recorded and the shape of the writing is real, but the "
+                   "distance figures should not be trusted on their own.",
 }
 
 
@@ -163,7 +170,7 @@ def _profile(texts: list[str], register: str,
     chunks = W.windows(texts, overlap=overlap)
     if not chunks:
         return None
-    est, cats = W.aggregate(chunks)
+    est, cats = W.aggregate(chunks, overlap=overlap)
     p = Profile(
         register=register,
         words=pooled.n_words,

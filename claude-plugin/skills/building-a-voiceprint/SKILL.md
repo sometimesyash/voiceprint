@@ -61,17 +61,22 @@ mixture. Tag each batch with `--register` and the tool keeps them apart.
 everything downstream to sound generated. If they hand you something a model
 drafted, say so and ask for something they typed.
 
-**Enough of it.** Frequency measures need roughly five thousand words to
-settle and degrade badly below about two and a half thousand. The tool builds
-below that and labels the result, but a thin profile is a hint, not a
-specification.
+**Enough of it.** More than you would expect. Measured against 24 authors, a
+5,000 word profile identifies the right person about 40% of the time on long
+passages; 20,000 words reaches about 90%. The tool builds below that and
+labels the result, but a thin profile briefs a model usefully while proving
+nothing about identity.
 
 | words | label | what it is worth |
 |---|---|---|
-| 5,000+ | stable | the frequency measures hold |
-| 2,000 to 5,000 | usable | rarer measures still carry noise |
-| 400 to 2,000 | thin | rhythm and punctuation only, treat as direction |
-| under 400 | provisional | structure recorded, numbers not trustworthy |
+| 20,000+ | stable | the function-word measures hold |
+| 10,000 to 20,000 | usable | good on long passages, weaker on short |
+| 2,500 to 10,000 | thin | rhythm and punctuation only |
+| under 2,500 | provisional | structure is real, distances are not |
+
+Do not tell someone their profile is good when it says `provisional`. Say what
+it can do, which is describe how they write, and what it cannot, which is
+recognise them.
 
 ## Where it goes
 
@@ -96,8 +101,13 @@ writing and want it rebuilt, and say that the old one is being replaced.
 
 ```bash
 vp diff yash something-they-wrote.md
+python scripts/discrimination.py --corpus DIR
 ```
 
-Run it against a piece of their writing that was not in the corpus. Distance
-should come back close. If it does not, the corpus was probably mixed-register
-or contained text they did not write.
+Run the first against a piece of their writing that was not in the corpus.
+Run the second if you have several people's writing: it holds each text out
+and asks which profile it lands nearest, which is the only honest test of
+whether the profile identifies anyone.
+
+If discrimination sits near chance, the corpus is too small or too mixed. That
+is information, not failure, and it should be reported rather than hidden.

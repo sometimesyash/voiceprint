@@ -188,8 +188,18 @@ HANDLERS = {
 
 
 def handle(request: dict) -> dict | None:
+    """One request in, one response out, or None for a notification.
+
+    A notification carries no id and must never be answered, whatever the
+    method is.
+    """
+    if not isinstance(request, dict):
+        return {"jsonrpc": "2.0", "id": None,
+                "error": {"code": -32600, "message": "request must be an object"}}
+
     method = request.get("method")
     rid = request.get("id")
+    is_notification = "id" not in request
 
     if method == "initialize":
         result = {"protocolVersion": PROTOCOL,
@@ -211,15 +221,27 @@ def handle(request: dict) -> dict | None:
                 result = _text(str(e), error=True)
             except Exception as e:
                 result = _text(f"{type(e).__name__}: {e}", error=True)
-    elif method in ("notifications/initialized", "notifications/cancelled"):
-        return None
     elif method == "ping":
         result = {}
     else:
+        if is_notification:
+            return None
         return {"jsonrpc": "2.0", "id": rid,
                 "error": {"code": -32601, "message": f"unknown method {method}"}}
 
-    return {"jsonrpc": "2.0", "id": rid, "result": result}
+    return None if is_notification else {"jsonrpc": "2.0", "id": rid,
+                                         "result": result}
+
+
+def dispatch(payload) -> dict | list | None:
+    """Handle one request or a batch, per JSON-RPC 2.0."""
+    if isinstance(payload, list):
+        if not payload:
+            return {"jsonrpc": "2.0", "id": None,
+                    "error": {"code": -32600, "message": "empty batch"}}
+        out = [r for r in (handle(item) for item in payload) if r is not None]
+        return out or None
+    return handle(payload)
 
 
 def serve(stdin=sys.stdin, stdout=sys.stdout) -> None:
@@ -228,10 +250,17 @@ def serve(stdin=sys.stdin, stdout=sys.stdout) -> None:
         if not line:
             continue
         try:
-            request = json.loads(line)
+            payload = json.loads(line)
         except json.JSONDecodeError:
-            continue
-        response = handle(request)
+            response = {"jsonrpc": "2.0", "id": None,
+                        "error": {"code": -32700, "message": "parse error"}}
+        else:
+            try:
+                response = dispatch(payload)
+            except Exception as e:
+                response = {"jsonrpc": "2.0", "id": None,
+                            "error": {"code": -32603,
+                                      "message": f"{type(e).__name__}: {e}"}}
         if response is not None:
             stdout.write(json.dumps(response) + "\n")
             stdout.flush()

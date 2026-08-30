@@ -104,7 +104,9 @@ class Distance(unittest.TestCase):
 
     def test_delta_of_identical_vectors_is_zero(self):
         v = function_word_vector(Doc(PROSE))
-        self.assertEqual(burrows_delta(v, v), 0.0)
+        delta, calibrated = burrows_delta(v, v)
+        self.assertEqual(delta, 0.0)
+        self.assertTrue(calibrated, "a between-author baseline should ship")
 
     def test_no_z_score_runs_away(self):
         d = measure(PROSE[:900], self.profile)
@@ -112,11 +114,27 @@ class Distance(unittest.TestCase):
 
 
 class Confidence(unittest.TestCase):
-    def test_tiers(self):
-        self.assertEqual(confidence(6000), "stable")
-        self.assertEqual(confidence(2500), "usable")
-        self.assertEqual(confidence(800), "thin")
-        self.assertEqual(confidence(100), "provisional")
+    def test_tiers_match_the_calibration(self):
+        self.assertEqual(confidence(25000), "stable")
+        self.assertEqual(confidence(12000), "usable")
+        self.assertEqual(confidence(4000), "thin")
+        self.assertEqual(confidence(900), "provisional")
+
+    def test_tiers_are_not_more_optimistic_than_measured(self):
+        """The calibration is the authority for these numbers, not taste."""
+        import json
+        from pathlib import Path
+
+        from voiceprint import profile as P
+        path = (Path(P.__file__).parent / "data" / "calibration.json")
+        if not path.exists():
+            self.skipTest("no calibration shipped")
+        cal = json.loads(path.read_text(encoding="utf8"))
+        best = max(v for k, v in cal["accuracy"].items()
+                   if k.startswith(f"{P.STABLE_WORDS}x")
+                   or k.startswith("40000x"))
+        self.assertGreaterEqual(best, 0.8,
+                                "stable tier claims more than was measured")
 
 
 class Blending(unittest.TestCase):

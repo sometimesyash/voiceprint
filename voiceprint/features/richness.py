@@ -72,26 +72,26 @@ def hapax_rate(seq: list[str]) -> float:
     return S.rate(sum(1 for c in counts.values() if c == 1), len(counts))
 
 
-@feature("richness.mattr", "richness", "scalar", RIGID, "0-1")
+@feature("richness.mattr", "richness", "scalar", RIGID, "0-1", group="richness")
 def _mattr(d: Doc) -> float:
     return mattr(d.words)
 
 
-@feature("richness.mtld", "richness", "scalar", RIGID, "factors")
+@feature("richness.mtld", "richness", "scalar", RIGID, "factors", group="richness")
 def _mtld(d: Doc) -> float:
     return mtld(d.words)
 
 
-@feature("richness.yules_k", "richness", "scalar", RIGID, "K")
+@feature("richness.yules_k", "richness", "scalar", RIGID, "K", group="richness")
 def _yk(d: Doc) -> float:
     return yules_k(d.words)
 
 
-@feature("richness.hapax_rate", "richness", "scalar", RIGID, "0-1")
+@feature("richness.hapax_rate", "richness", "scalar", RIGID, "0-1", group="richness")
 def _hapax(d: Doc) -> float:
     return hapax_rate(d.words)
 
 
-@feature("richness.content_hapax_rate", "richness", "scalar", RIGID, "0-1")
+@feature("richness.content_hapax_rate", "richness", "scalar", RIGID, "0-1", group="richness")
 def _content_hapax(d: Doc) -> float:
     return hapax_rate([w for w in d.words if w not in STOPWORDS])

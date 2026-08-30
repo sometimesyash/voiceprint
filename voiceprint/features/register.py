@@ -12,7 +12,7 @@ from . import FIRM, RIGID, SUPPLE, feature
 CONTRACTION_RE = re.compile(r"\b\w+['\u2019](s|t|re|ve|ll|d|m)\b", re.I)
 
 
-@feature("person.dominant", "register", "categorical", SUPPLE)
+@feature("person.dominant", "register", "categorical", SUPPLE, group="person")
 def _person(d: Doc) -> str:
     """first_singular | first_plural | second | third | impersonal"""
     counts = {
@@ -25,27 +25,28 @@ def _person(d: Doc) -> str:
     return top if counts[top] else "impersonal"
 
 
-@feature("person.first_sg_per100", "register", "scalar", SUPPLE, "per 100w")
+@feature("person.first_sg_per100", "register", "scalar", SUPPLE, "per 100w", group="person")
 def _fsg(d: Doc) -> float:
     return S.per100(sum(1 for w in d.words if w in PRONOUNS_FIRST_SG), d.n_words)
 
 
-@feature("person.first_pl_per100", "register", "scalar", SUPPLE, "per 100w")
+@feature("person.first_pl_per100", "register", "scalar", SUPPLE, "per 100w", group="person")
 def _fpl(d: Doc) -> float:
     return S.per100(sum(1 for w in d.words if w in PRONOUNS_FIRST_PL), d.n_words)
 
 
-@feature("person.second_per100", "register", "scalar", SUPPLE, "per 100w")
+@feature("person.second_per100", "register", "scalar", SUPPLE, "per 100w", group="person")
 def _snd(d: Doc) -> float:
     return S.per100(sum(1 for w in d.words if w in PRONOUNS_SECOND), d.n_words)
 
 
-@feature("person.third_per100", "register", "scalar", SUPPLE, "per 100w")
+@feature("person.third_per100", "register", "scalar", SUPPLE, "per 100w", group="person")
 def _thd(d: Doc) -> float:
     return S.per100(sum(1 for w in d.words if w in PRONOUNS_THIRD), d.n_words)
 
 
-@feature("register.contractions_per100", "register", "scalar", SUPPLE, "per 100w")
+@feature("register.contractions_per100", "register", "scalar", SUPPLE,
+         "per 100w", group="contraction")
 def _contractions(d: Doc) -> float:
     return S.per100(len(CONTRACTION_RE.findall(d.clean)), d.n_words)
 
@@ -57,7 +58,8 @@ def _nominal(d: Doc) -> float:
     return S.per100(n, d.n_words)
 
 
-@feature("register.negation_synthetic_rate", "register", "scalar", RIGID, "0-1")
+@feature("register.negation_synthetic_rate", "register", "scalar", RIGID,
+         "0-1", group="contraction")
 def _negation(d: Doc) -> float:
     """n't against 'not'. Biber's synthetic-versus-analytic negation."""
     synth = len(re.findall(r"n['\u2019]t\b", d.lower))

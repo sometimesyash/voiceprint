@@ -32,14 +32,14 @@ def is_stacked(block: str) -> bool:
     return sum(1 for s in sents if is_fragment(s)) >= len(sents) / 2
 
 
-@feature("shape.fragment_rate", "structure", "scalar", FIRM, "0-1")
+@feature("shape.fragment_rate", "structure", "scalar", FIRM, "0-1", group="fragments")
 def _frag(d: Doc) -> float:
     """Share of sentences with no finite clause."""
     return S.rate(sum(1 for s in d.sentences if is_fragment(s)),
                   len(d.sentences))
 
 
-@feature("shape.fragment_rate_prose", "structure", "scalar", FIRM, "0-1")
+@feature("shape.fragment_rate_prose", "structure", "scalar", FIRM, "0-1", group="fragments")
 def _frag_prose(d: Doc) -> float:
     """Fragment rate over prose only.
 

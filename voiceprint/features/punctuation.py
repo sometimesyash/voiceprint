@@ -24,12 +24,19 @@ MARKS = {
     "ellipsis": lambda s: s.count("...") + s.count("\u2026"),
     "ampersand": lambda s: s.count("&"),
     "slash": lambda s: len(re.findall(r"\w/\w", s)),
-    "apostrophe": lambda s: len(re.findall(r"\w['\u2019]\w", s)),
 }
+
+# Word-internal apostrophes are contractions and possessives, already counted
+# in register.contractions_per100. Measuring them here too made one habit move
+# three features and dominate the distance, so the mark is deliberately absent
+# from this table.
+GROUPS = {"quote_double": "quotes", "quote_single": "quotes",
+          "em_dash": "dashes", "en_dash": "dashes"}
 
 
 def _make(mark: str, fn):
-    @feature(f"punct.{mark}_per100", "punctuation", "scalar", RIGID, "per 100w")
+    @feature(f"punct.{mark}_per100", "punctuation", "scalar", RIGID,
+             "per 100w", group=GROUPS.get(mark, f"punct.{mark}"))
     def _f(d: Doc, _fn=fn) -> float:
         return S.per100(_fn(d.clean), d.n_words)
     return _f

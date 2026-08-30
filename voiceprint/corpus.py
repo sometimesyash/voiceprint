@@ -113,12 +113,28 @@ class Ladder:
     """Try connectors, then named files, then pasted text. Then stop.
 
     `ask` is the host's consent prompt. It receives a plain description of what
-    would be read and returns True only on an explicit yes. A connector that is
-    available is still never read without one.
+    would be read and returns True only on an explicit yes.
+
+    With no callback supplied every connector is treated as declined. A host
+    that forgets to wire consent gets nothing, rather than quietly getting a
+    mailbox.
     """
     connectors: list[Connector] = field(default_factory=list)
     ask: Callable[[str], bool] | None = None
     limit: int = 200
+
+    def _consented(self, connector: Connector, log: list[str]) -> bool:
+        if self.ask is None:
+            log.append(f"{connector.name}: skipped, no consent prompt available")
+            return False
+        try:
+            granted = self.ask(connector.describe())
+        except Exception as e:
+            log.append(f"{connector.name}: consent failed ({e}), treated as declined")
+            return False
+        if not granted:
+            log.append(f"{connector.name}: declined")
+        return bool(granted)
 
     def gather(self, files: list[str] | None = None,
                pasted: str | None = None,
@@ -135,8 +151,7 @@ class Ladder:
                 log.append(f"{c.name}: unavailable ({e})")
                 continue
 
-            if self.ask and not self.ask(c.describe()):
-                log.append(f"{c.name}: declined")
+            if not self._consented(c, log):
                 continue
 
             try:

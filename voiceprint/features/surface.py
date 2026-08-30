@@ -41,50 +41,50 @@ def terminal_punct(s: str) -> str:
             ":": "colon"}.get(s[-1], "none")
 
 
-@feature("caps.dominant", "surface", "categorical", CONVENTION)
+@feature("caps.dominant", "surface", "categorical", CONVENTION, group="caps")
 def _caps(d: Doc) -> str:
     """Prevailing capitalisation across sentences."""
     c = Counter(caps_style(s) for s in d.sentences)
     return c.most_common(1)[0][0] if c else "none"
 
 
-@feature("caps.consistency", "surface", "scalar", CONVENTION, "0-1")
+@feature("caps.consistency", "surface", "scalar", CONVENTION, "0-1", group="caps")
 def _caps_consistency(d: Doc) -> float:
     c = Counter(caps_style(s) for s in d.sentences)
     return S.rate(c.most_common(1)[0][1], len(d.sentences)) if c else 0.0
 
 
-@feature("terminal.dominant", "surface", "categorical", CONVENTION)
+@feature("terminal.dominant", "surface", "categorical", CONVENTION, group="terminal")
 def _term(d: Doc) -> str:
     """Prevailing final character class."""
     c = Counter(terminal_punct(s) for s in d.sentences)
     return c.most_common(1)[0][0] if c else "none"
 
 
-@feature("terminal.full_stop_rate", "surface", "scalar", CONVENTION, "0-1")
+@feature("terminal.full_stop_rate", "surface", "scalar", CONVENTION, "0-1", group="terminal")
 def _term_stop(d: Doc) -> float:
     c = Counter(terminal_punct(s) for s in d.sentences)
     return S.rate(c.get("full_stop", 0), len(d.sentences))
 
 
-@feature("terminal.none_rate", "surface", "scalar", CONVENTION, "0-1")
+@feature("terminal.none_rate", "surface", "scalar", CONVENTION, "0-1", group="terminal")
 def _term_none(d: Doc) -> float:
     c = Counter(terminal_punct(s) for s in d.sentences)
     return S.rate(c.get("none", 0), len(d.sentences))
 
 
-@feature("rhythm.words_per_sentence", "rhythm", "scalar", FIRM, "words")
+@feature("rhythm.words_per_sentence", "rhythm", "scalar", FIRM, "words", group="sentence_length")
 def _wps(d: Doc) -> float:
     """Mean sentence length."""
     return S.mean(d.sentence_lengths)
 
 
-@feature("rhythm.sentence_sd", "rhythm", "scalar", RIGID, "words")
+@feature("rhythm.sentence_sd", "rhythm", "scalar", RIGID, "words", group="sentence_length")
 def _wps_sd(d: Doc) -> float:
     return S.sd(d.sentence_lengths)
 
 
-@feature("rhythm.length_cv", "rhythm", "scalar", RIGID, "ratio")
+@feature("rhythm.length_cv", "rhythm", "scalar", RIGID, "ratio", group="sentence_length")
 def _wps_cv(d: Doc) -> float:
     """Sentence-length coefficient of variation. Uniformity is the tell."""
     return S.cv(d.sentence_lengths)
@@ -96,22 +96,22 @@ def _spp(d: Doc) -> float:
     return S.mean([len(T.sentences(p)) for p in paras]) if paras else 0.0
 
 
-@feature("word.mean_length", "surface", "scalar", RIGID, "chars")
+@feature("word.mean_length", "surface", "scalar", RIGID, "chars", group="word_length")
 def _wlen(d: Doc) -> float:
     return S.mean([len(w) for w in d.words])
 
 
-@feature("word.length_sd", "surface", "scalar", RIGID, "chars")
+@feature("word.length_sd", "surface", "scalar", RIGID, "chars", group="word_length")
 def _wlen_sd(d: Doc) -> float:
     """Mendenhall's characteristic curve, compressed to its spread."""
     return S.sd([len(w) for w in d.words])
 
 
-@feature("word.long_rate", "surface", "scalar", RIGID, "0-1")
+@feature("word.long_rate", "surface", "scalar", RIGID, "0-1", group="word_length")
 def _wlong(d: Doc) -> float:
     return S.rate(sum(1 for w in d.words if len(w) >= 9), len(d.words))
 
 
-@feature("word.short_rate", "surface", "scalar", RIGID, "0-1")
+@feature("word.short_rate", "surface", "scalar", RIGID, "0-1", group="word_length")
 def _wshort(d: Doc) -> float:
     return S.rate(sum(1 for w in d.words if len(w) <= 3), len(d.words))

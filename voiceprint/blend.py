@@ -88,10 +88,11 @@ def _tolerance(est: Estimate, fidelity: float) -> float:
     """Half-width of the acceptable band.
 
     Wider where the person is inconsistent, wider again where the sample is
-    small, and never so tight that ordinary variation reads as a failure.
+    small. Support reads the overlap-discounted count, so a thin corpus
+    windowed with overlap does not buy itself a false narrowing.
     """
     base = max(est.sd, abs(est.mean) * 0.15, 1e-3)
-    support = 1.0 if est.n >= 8 else 1.0 + (8 - est.n) * 0.12
+    support = 1.0 if est.effective_n >= 8 else 1.0 + (8 - est.effective_n) * 0.12
     strictness = 0.6 + (1.0 - fidelity) * 1.4
     return round(base * support * strictness * 1.25, 4)
 

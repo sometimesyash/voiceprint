@@ -5,6 +5,7 @@ dist/
 build/
 .venv/
 venv/
+.cache/
 .pytest_cache/
 *.voiceprint.md
 uservoice.json
