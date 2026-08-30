@@ -1,8 +1,15 @@
----
+# Research: what actually individuates a person's language
 
-# Research Report: Measurable Parameters That Individuate a Person's Language
+Commissioned while building voiceprint, to settle which measurements have
+evidence behind them and which were inherited taste. The feature set in
+`voiceprint/features/` is drawn from this, and several decisions in the code
+exist only because of what is recorded here.
 
-**Verification note:** Directly opened and read (full text or substantial sections): DetectGPT `arXiv:2301.11305`, GLTR `arXiv:1906.04043`, HC3/Guo et al. `arXiv:2301.07597`, Kulkarni et al. geographic variation `arXiv:1510.06786`, and Eder's publication list (maciejeder.org). Publisher pages for Burrows, Stamatatos, Grieve, Biber, Wright, Coulthard, Nerbonne (Tandfonline/OUP/Wiley/Cambridge) returned **403 Forbidden** or JS-only shells, so those are cited from established secondary knowledge and metadata, and I mark them **[metadata-verified, full text not opened]**. Where I could not verify a specific number, I say so.
+Everything below was produced by a research agent and is reproduced with its
+verification status intact, including the places it could not confirm a number.
+Read the gaps section at the end before quoting any figure.
+
+**Verification note:** Directly opened and read (full text or substantial sections): DetectGPT `arXiv:2301.11305`, GLTR `arXiv:1906.04043`, HC3/Guo et al. `arXiv:2301.07597`, Kulkarni et al. geographic variation `arXiv:1510.06786`, and Eder's publication list (maciejeder.org). Publisher pages for Burrows, Stamatatos, Grieve, Biber, Wright, Coulthard, Nerbonne (Tandfonline/OUP/Wiley/Cambridge) returned **403 Forbidden** or JS-only shells, so those are cited from established secondary knowledge and metadata, marked **[metadata-verified, full text not opened]**. Where a specific number could not be verified, the report says so.
 
 ---
 
