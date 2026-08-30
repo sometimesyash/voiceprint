@@ -215,6 +215,8 @@ with verification status per source.
 [docs/holdout-test.md](docs/holdout-test.md) for whether the brief changes the
 writing, including the first version of that experiment which was too kind to
 itself.
+[docs/design-notes.md](docs/design-notes.md) for why it is built this way, and
+the constraints that should survive a rewrite.
 
 ## Licence
 
