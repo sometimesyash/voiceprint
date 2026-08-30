@@ -11,9 +11,29 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
+import stat
 import sys
 from pathlib import Path
+
+
+def _force_remove(path: Path) -> None:
+    """Delete a tree, clearing the read-only bit OneDrive leaves behind.
+
+    Copying out of a synced folder propagates ReadOnly onto the destination,
+    and Windows then refuses to remove it, so a second sync fails on a machine
+    where the first one worked.
+    """
+    def onerror(func, target, _exc):
+        try:
+            os.chmod(target, stat.S_IWRITE)
+            func(target)
+        except Exception:
+            pass
+
+    if path.exists():
+        shutil.rmtree(path, onerror=onerror)
 
 ROOT = Path(__file__).resolve().parent.parent
 SKILLS = ROOT / "skills"
@@ -82,8 +102,7 @@ def sync_harness(name: str, spec: dict, check: bool) -> bool:
     changed = False
 
     if not check:
-        if dest.exists():
-            shutil.rmtree(dest)
+        _force_remove(dest)
         shutil.copytree(SKILLS, dest)
         changed = True
 
@@ -105,8 +124,7 @@ def install() -> None:
             continue
         for name in skill_names():
             dest = root / name
-            if dest.exists():
-                shutil.rmtree(dest, ignore_errors=True)
+            _force_remove(dest)
             shutil.copytree(SKILLS / name, dest, dirs_exist_ok=True)
         print(f"  installed {label:18s} {root}")
 
