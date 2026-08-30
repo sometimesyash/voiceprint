@@ -18,7 +18,7 @@ import json
 import sys
 from pathlib import Path
 
-from voiceprint import context, store
+from voiceprint import context, elicit, store
 from voiceprint.blend import DEFAULT_FIDELITY, blend
 from voiceprint.check import against_rules
 from voiceprint.corpus import Ladder, NoCorpus
@@ -132,12 +132,24 @@ def cmd_diff(args) -> int:
     draft = (Path(args.draft).read_text(encoding="utf8")
              if args.draft != "-" else sys.stdin.read())
     d = measure(draft, profile, worst=args.top)
-    print(f"delta {d.delta:.3f}  scalars {d.scalar:.3f}  "
-          f"n-grams {d.ngram:.3f}  overall {d.overall:.3f}  ({d.verdict()})\n")
+    print(f"identity {d.identity:.3f} from {d.arm}  "
+          f"(delta {d.delta:.3f} weight {d.delta_weight:.2f}, "
+          f"texture {d.texture:.3f})")
+    print(f"scalars {d.scalar:.3f}  n-grams {d.ngram:.3f}  "
+          f"overall {d.overall:.3f}  ({d.verdict()})")
+    print(f"support {d.support_words} words\n")
     print(f"{'measure':38s} {'draft':>10s} {'yours':>10s} {'sd':>8s} {'z':>7s}")
     for dev in d.worst:
         print(f"{dev.feature:38s} {dev.observed:10g} {dev.expected:10g} "
               f"{dev.sd:8g} {dev.z:7.2f}")
+    return 0
+
+
+def cmd_elicit(args) -> int:
+    have = 0
+    if store.exists(args.name):
+        have = store.load(args.name).words
+    print(elicit.brief(have, args.target))
     return 0
 
 
@@ -205,6 +217,12 @@ def parser() -> argparse.ArgumentParser:
     d.set_defaults(fn=cmd_diff)
 
     sub.add_parser("list", help="profiles on this machine").set_defaults(fn=cmd_list)
+
+    e = sub.add_parser("elicit", help="prompts to get more writing")
+    e.add_argument("name")
+    e.add_argument("--target", type=int, default=2500,
+                   help="words the profile should reach")
+    e.set_defaults(fn=cmd_elicit)
 
     x = sub.add_parser("remove", help="delete a profile")
     x.add_argument("name")

@@ -83,6 +83,24 @@ TOOLS = [
         },
     },
     {
+        "name": "voiceprint_elicit",
+        "description": (
+            "Get prompts that draw natural writing out of someone whose "
+            "profile is too thin. Use when voiceprint_build reports a thin or "
+            "provisional profile, or when there is no writing to point at. "
+            "Returns questions to ask, spread across registers."),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "target": {"type": "number",
+                           "description": "words the profile should reach, "
+                                          "default 2500"},
+            },
+            "required": ["name"],
+        },
+    },
+    {
         "name": "voiceprint_list",
         "description": "Which profiles exist on this machine.",
         "inputSchema": {"type": "object", "properties": {}},
@@ -164,6 +182,12 @@ def _check(args: dict) -> dict:
     return _text(report.to_markdown())
 
 
+def _elicit(args: dict) -> dict:
+    from . import elicit
+    have = store.load(args["name"]).words if store.exists(args["name"]) else 0
+    return _text(elicit.brief(have, int(args.get("target", 2500))))
+
+
 def _list(_: dict) -> dict:
     found = store.listing()
     if not found:
@@ -182,6 +206,7 @@ HANDLERS = {
     "voiceprint_build": _build,
     "voiceprint_brief": _brief,
     "voiceprint_check": _check,
+    "voiceprint_elicit": _elicit,
     "voiceprint_list": _list,
     "voiceprint_show": _show,
 }

@@ -25,6 +25,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from voiceprint.doc import Doc
 from voiceprint.features.lexical import function_word_vector
 from voiceprint.lexicons import FUNCTION_WORDS
+from voiceprint.texture import blend as blend_arms
+from voiceprint.texture import distance as texture_distance
+from voiceprint.texture import profile as texture_profile
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "voiceprint" / "data" / "calibration.json"
@@ -80,53 +83,68 @@ def main():
     print(f"{len(authors)} authors, chance {chance:.0%}, "
           f"{TRIALS} trials per cell\n")
 
-    grid = {}
-    print(f"{'profile':>9s} " + "".join(f"{n:>8d}" for n in PASSAGE_SIZES))
-    print("-" * (9 + 8 * len(PASSAGE_SIZES)))
-    for pw in PROFILE_SIZES:
-        profiles = {a: function_word_vector(
-            Doc(" ".join(corpora[a][:len(corpora[a]) // 2][:pw])))
-            for a in authors}
-        row = []
-        for tw in PASSAGE_SIZES:
-            rng = random.Random(3)
-            hits = n = 0
-            for _ in range(TRIALS):
-                truth = rng.choice(authors)
-                tail = corpora[truth][len(corpora[truth]) // 2:]
-                if len(tail) < tw + 10:
-                    continue
-                start = rng.randrange(0, len(tail) - tw)
-                obs = function_word_vector(
-                    Doc(" ".join(tail[start:start + tw])))
-                scores = {a: delta(obs, profiles[a]) for a in authors}
-                hits += min(scores, key=scores.get) == truth
-                n += 1
-            acc = round(hits / n, 3) if n else 0.0
-            grid[f"{pw}x{tw}"] = acc
-            row.append(acc)
-        print(f"{pw:9d} " + "".join(f"{v:8.0%}" for v in row))
+    grid: dict[str, dict[str, float]] = {"delta": {}, "texture": {},
+                                         "blended": {}}
+    for arm in ("delta", "texture", "blended"):
+        print(f"[{arm}]")
+        print(f"{'profile':>9s} " + "".join(f"{n:>8d}" for n in PASSAGE_SIZES))
+        print("-" * (9 + 8 * len(PASSAGE_SIZES)))
+        for pw in PROFILE_SIZES:
+            heads = {a: " ".join(corpora[a][:len(corpora[a]) // 2][:pw])
+                     for a in authors}
+            prof_fw = {a: function_word_vector(Doc(heads[a])) for a in authors}
+            prof_tx = {a: texture_profile(Doc(heads[a])) for a in authors}
+            row = []
+            for tw in PASSAGE_SIZES:
+                rng = random.Random(3)
+                hits = n = 0
+                for _ in range(TRIALS):
+                    truth = rng.choice(authors)
+                    tail = corpora[truth][len(corpora[truth]) // 2:]
+                    if len(tail) < tw + 10:
+                        continue
+                    start = rng.randrange(0, len(tail) - tw)
+                    doc = Doc(" ".join(tail[start:start + tw]))
+                    obs_fw = function_word_vector(doc)
+                    obs_tx = texture_profile(doc) if arm != "delta" else {}
+                    scores = {}
+                    for a in authors:
+                        d = delta(obs_fw, prof_fw[a])
+                        if arm == "delta":
+                            scores[a] = d
+                        else:
+                            t = texture_distance(obs_tx, prof_tx[a])
+                            scores[a] = t if arm == "texture" else \
+                                blend_arms(d, t, min(tw, pw))[0]
+                    hits += min(scores, key=scores.get) == truth
+                    n += 1
+                acc = round(hits / n, 3) if n else 0.0
+                grid[arm][f"{pw}x{tw}"] = acc
+                row.append(acc)
+            print(f"{pw:9d} " + "".join(f"{v:8.0%}" for v in row))
+        print()
 
     data = {
-        "schema": 1,
+        "schema": 2,
         "authors": len(corpora),
         "chance": round(chance, 4),
         "trials_per_cell": TRIALS,
         "profile_sizes": list(PROFILE_SIZES),
         "passage_sizes": list(PASSAGE_SIZES),
-        "accuracy": grid,
+        "accuracy": grid["blended"],
+        "by_arm": grid,
         "note": ("Held-out attribution over public domain fiction. Profiles "
                  "come from the first half of each author's text and passages "
                  "from the second, so no passage appears in the profile it is "
-                 "scored against. Accuracy reaches 88% with a 40,000 word "
-                 "profile and a 6,400 word passage, consistent with the "
-                 "published behaviour of Delta, which indicates the "
-                 "implementation is sound and everything below that is a "
-                 "sample size limit rather than a bug. Fiction, so working "
-                 "prose may differ."),
+                 "scored against. Three arms are compared: function-word "
+                 "Delta, character n-gram texture, and the size-weighted "
+                 "blend the tool actually uses. Texture dominates on short "
+                 "samples and Delta catches up as text grows, which is why "
+                 "the blend follows sample size. Fiction, so working prose "
+                 "may differ."),
     }
     args.out.write_text(json.dumps(data, indent=1), encoding="utf8")
-    print(f"\nwrote {args.out}")
+    print(f"wrote {args.out}")
 
 
 if __name__ == "__main__":

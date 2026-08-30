@@ -25,6 +25,10 @@ from .doc import Doc
 from .features import group_of, registry
 from .features.lexical import char_ngram_profile, function_word_vector
 from .profile import Profile
+from .texture import blend as blend_arms
+from .texture import delta_weight
+from .texture import distance as texture_distance
+from .texture import profile as texture_profile
 from .windows import Estimate
 
 BASELINE = Path(__file__).resolve().parent / "data" / "baseline.json"
@@ -84,6 +88,23 @@ class Distance:
     worst: list[Deviation]
     n_features: int
     calibrated: bool = True
+    texture: float = 0.0
+    delta_weight: float = 1.0
+    support_words: int = 0
+
+    @property
+    def identity(self) -> float:
+        """The two identity arms blended by how much text supports them."""
+        return round(self.delta_weight * self.delta
+                     + (1 - self.delta_weight) * self.texture, 4)
+
+    @property
+    def arm(self) -> str:
+        if self.delta_weight <= 0.05:
+            return "texture"
+        if self.delta_weight >= 0.3:
+            return "both"
+        return "texture-led"
 
     def verdict(self, tolerance: float = 1.5) -> str:
         if self.overall <= tolerance * 0.6:
@@ -95,9 +116,12 @@ class Distance:
         return "off"
 
     def as_dict(self) -> dict:
-        return {"delta": self.delta, "scalar": self.scalar,
-                "ngram": self.ngram, "overall": self.overall,
-                "verdict": self.verdict(), "calibrated": self.calibrated,
+        return {"delta": self.delta, "texture": self.texture,
+                "identity": self.identity, "delta_weight": self.delta_weight,
+                "arm": self.arm, "scalar": self.scalar, "ngram": self.ngram,
+                "overall": self.overall, "verdict": self.verdict(),
+                "calibrated": self.calibrated,
+                "support_words": self.support_words,
                 "worst": [d.as_dict() for d in self.worst]}
 
 
@@ -185,7 +209,14 @@ def aggregate_scalar(devs: list[Deviation]) -> float:
 
 
 def measure(text: str, profile: Profile, worst: int = 8) -> Distance:
-    """How far a draft sits from a profile."""
+    """How far a draft sits from a profile.
+
+    Identity is judged by two arms. Delta reads the function-word
+    distribution and is the stronger measure once there is enough text.
+    Texture reads character n-grams and holds up on short samples where Delta
+    is still noise. The weighting between them follows the smaller of the two
+    texts, since the noisier side governs.
+    """
     doc = Doc(text)
     devs = scalar_deviations(doc, profile)
     scalar = aggregate_scalar(devs)
@@ -193,7 +224,11 @@ def measure(text: str, profile: Profile, worst: int = 8) -> Distance:
                                       profile.function_words)
     ngram = ngram_distance(char_ngram_profile(doc), profile.char_ngrams)
 
-    overall = round(0.45 * delta + 0.35 * scalar + 0.20 * ngram, 4)
+    support = min(doc.n_words, profile.words) if profile.words else doc.n_words
+    texture = texture_distance(texture_profile(doc), profile.texture)
+    identity, weight = blend_arms(delta, texture, support)
+
+    overall = round(0.45 * identity + 0.35 * scalar + 0.20 * ngram, 4)
     devs.sort(key=lambda d: -abs(d.z))
     return Distance(delta, scalar, ngram, overall, devs[:worst], len(devs),
-                    calibrated)
+                    calibrated, texture, weight, support)

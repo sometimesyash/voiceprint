@@ -115,9 +115,9 @@ class Distance(unittest.TestCase):
 
 class Confidence(unittest.TestCase):
     def test_tiers_match_the_calibration(self):
-        self.assertEqual(confidence(25000), "stable")
-        self.assertEqual(confidence(12000), "usable")
-        self.assertEqual(confidence(4000), "thin")
+        self.assertEqual(confidence(12000), "stable")
+        self.assertEqual(confidence(6000), "usable")
+        self.assertEqual(confidence(2000), "thin")
         self.assertEqual(confidence(900), "provisional")
 
     def test_tiers_are_not_more_optimistic_than_measured(self):

@@ -19,32 +19,48 @@ vp check yash draft.md                                            # after
 
 ## Read this before trusting a number
 
-The measurement was calibrated by running held-out authorship attribution
-across 24 public domain authors. The full table is in
-[docs/calibration.md](docs/calibration.md). The short version:
+Identity is measured two ways, because they fail in different places. **Delta**
+reads the function-word distribution and is the measure the literature
+validates, but it needs a lot of text. **Texture** reads character n-grams,
+which settle much sooner because a short passage contains thousands of them.
 
-| profile | 800w passage | 3,200w passage |
+Held-out attribution against 24 authors, chance 4%:
+
+| profile | 400w passage | 6,400w passage |
 |---|---|---|
-| 5,000 words | 38% | 42% |
-| 20,000 words | 55% | 75% |
-| 40,000 words | 60% | 82% |
+| Delta, 40,000 words | 28% | 92% |
+| texture, 40,000 words | 65% | 90% |
+| blended, 40,000 words | 65% | **95%** |
 
-Chance is 4%, and the best cell reaches 92%, which is where published Delta
-results sit. So the implementation works, and everything below that is a sample
-size limit.
+On real business email, three authors, holding out one text at a time: Delta
+36%, texture 91%, blended 91%, against 33% chance. Short formulaic prose is
+where Delta struggles most and texture earns its place.
+
+The weighting follows the smaller of the draft and the profile, so a short
+draft or a thin profile falls back to texture automatically. Full tables in
+[docs/calibration.md](docs/calibration.md).
 
 Two things follow.
 
-**A small profile cannot identify anyone.** Under about 2,500 words the tool is
-near chance. It will still build the profile, because the rhythm and
+**A small profile still cannot identify anyone.** Under about 1,500 words the
+tool is near chance. It will build the profile, because the rhythm and
 punctuation figures are real and useful for briefing a model, but it labels the
-result `provisional` and says the distance should not be trusted alone.
+result `provisional`.
 
-**A short draft cannot be scored.** Below 800 words the function-word rates are
-noise whatever you compare them against, and the report says so.
+**Used comparatively it works at far smaller sizes** than it does used
+absolutely. Asking which of two drafts is closer is a much easier question than
+asking whether one passes.
 
-Used comparatively, to ask which of two drafts is closer, it works at far
-smaller sizes than it does used absolutely, to ask whether one draft passes.
+## Not enough writing?
+
+```bash
+vp elicit yash
+```
+
+Returns prompts designed to draw natural prose, spread across registers so the
+result is not an average of genres. They ask about things people have opinions
+about, because argument produces rhythm where description produces lists, and
+they never ask someone to describe how they write.
 
 ## What it measures
 
@@ -58,8 +74,8 @@ Papers in 1964. Standardised against between-author variation measured from
 `data/baseline.json`, which is what makes it Burrows's Delta rather than a
 plain frequency distance.
 
-**Character n-grams.** Three to five character sequences, which pick up
-morphology and spelling habits that whole words miss.
+**Character n-grams**, orders 3 to 5. Morphology and spelling habits that whole
+words miss, and the arm that carries identity on anything short.
 
 **Recurrent phrases.** The multi-word sequences someone returns to without
 noticing. Forensic linguistics locates idiolect here more than in rare
@@ -124,10 +140,10 @@ declined, so a host that forgets cannot quietly read a mailbox.
 
 | words | label | what it is worth |
 |---|---|---|
-| 20,000+ | stable | the function-word measures hold |
-| 10,000 to 20,000 | usable | good on long passages, weaker on short |
-| 2,500 to 10,000 | thin | rhythm and punctuation only |
-| under 2,500 | provisional | structure is real, distances are not |
+| 10,000+ | stable | both measures hold, 57 to 95% in testing |
+| 5,000 to 10,000 | usable | 45 to 62%, enough to brief with confidence |
+| 1,500 to 5,000 | thin | texture carries identity, treat as directional |
+| under 1,500 | provisional | shape is real, distances are not |
 
 Register matters as much as volume. Genre moves writing at least as much as
 identity does (Biber 1988), so tag samples with `--register` and the tool keeps
@@ -182,11 +198,14 @@ does not have.
 ## Numbers that are still guesses
 
 Named so they are not mistaken for method. The aggregate weighting
-`0.45·delta + 0.35·scalar + 0.20·ngram`, the verdict bands at 0.6, 1.0 and 1.8
-times tolerance, the n-gram cosine scaling, the tolerance strictness curve in
-`blend.py`, and the materiality floors in `check.py`. Each is a defensible
-heuristic and none is calibrated. The confidence tiers and the reliable-length
-threshold are the two that now come from measurement.
+`0.45·identity + 0.35·scalar + 0.20·ngram`, the verdict bands at 0.6, 1.0 and
+1.8 times tolerance, the tolerance strictness curve in `blend.py`, and the
+materiality floors in `check.py`. Each is a defensible heuristic and none is
+calibrated.
+
+Measured, not guessed: the confidence tiers, the reliable-length threshold, the
+between-author dispersion behind Delta, and the floor, ceiling and cap of the
+two-arm weighting curve. All four come from `scripts/calibrate.py`.
 
 ## Reading
 

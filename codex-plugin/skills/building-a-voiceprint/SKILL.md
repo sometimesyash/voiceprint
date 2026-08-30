@@ -25,11 +25,11 @@ around; it moves you to step two.
 
 **3. Text they paste.** Anything of their own, several hundred words at least.
 
-**4. Nothing.** Then say so plainly and stop.
+4. **Nothing.** Then say so plainly, and offer the prompts.
 
 > I have nothing of your writing to measure, so I can't build a voiceprint.
 > If you point me at a folder, or paste a few hundred words you wrote, I'll
-> build it from that.
+> build it from that. Or I can ask you a few questions and use the answers.
 
 Do not offer to approximate. An invented profile is worse than none, because
 everything downstream then trusts it.
@@ -61,22 +61,40 @@ mixture. Tag each batch with `--register` and the tool keeps them apart.
 everything downstream to sound generated. If they hand you something a model
 drafted, say so and ask for something they typed.
 
-**Enough of it.** More than you would expect. Measured against 24 authors, a
-5,000 word profile identifies the right person about 40% of the time on long
-passages; 20,000 words reaches about 90%. The tool builds below that and
-labels the result, but a thin profile briefs a model usefully while proving
-nothing about identity.
+**Enough of it.** More than you would expect, though less than it used to be.
+Identity is measured two ways, and the character-texture arm holds up on
+material where word frequencies are still noise, so a 5,000 word profile now
+does what 10,000 used to.
 
 | words | label | what it is worth |
 |---|---|---|
-| 20,000+ | stable | the function-word measures hold |
-| 10,000 to 20,000 | usable | good on long passages, weaker on short |
-| 2,500 to 10,000 | thin | rhythm and punctuation only |
-| under 2,500 | provisional | structure is real, distances are not |
+| 10,000+ | stable | both measures hold |
+| 5,000 to 10,000 | usable | enough to brief with confidence |
+| 1,500 to 5,000 | thin | texture carries identity, directional only |
+| under 1,500 | provisional | shape is real, distances are not |
 
 Do not tell someone their profile is good when it says `provisional`. Say what
 it can do, which is describe how they write, and what it cannot, which is
 recognise them.
+
+## When there is not enough
+
+```bash
+vp elicit yash
+```
+
+Returns prompts that draw natural prose, chosen to spread across registers
+rather than pile up in one. Put them to the person and collect the answers as
+new samples.
+
+Two rules behind them, worth keeping if you write your own. Never ask someone
+to describe how they write, because the description is aspirational and the
+prose that follows is stilted. Ask about something they already have opinions
+about, because argument produces natural rhythm where description produces
+lists.
+
+Always prefer writing that already exists. Elicited prose is self-conscious by
+construction, so it is the fallback rather than the first move.
 
 ## Where it goes
 

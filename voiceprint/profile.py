@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
 from . import signature as sig
+from . import texture as TX
 from . import windows as W
 from .corpus import Corpus
 from .doc import Doc
@@ -20,11 +21,13 @@ from .features.lexical import (char_ngram_profile, function_word_vector,
 SCHEMA = 1
 
 # Set from scripts/calibrate.py, which measures held-out attribution accuracy
-# against 24 authors. The tiers name what the profile can actually resolve
-# rather than what would be convenient. See docs/calibration.md.
-STABLE_WORDS = 20000
-USABLE_WORDS = 10000
-THIN_WORDS = 2500
+# against 24 authors using both arms. The tiers name what a profile can
+# actually resolve rather than what would be convenient. Adding the texture
+# arm moved these down: 5,000 words now does what 10,000 used to.
+# See docs/calibration.md.
+STABLE_WORDS = 10000
+USABLE_WORDS = 5000
+THIN_WORDS = 1500
 
 
 def confidence(words: int) -> str:
@@ -38,17 +41,16 @@ def confidence(words: int) -> str:
 
 
 CONFIDENCE_NOTE = {
-    "stable": "Enough writing for the function-word measures to hold. In "
-              "testing this size resolved the right author about 90% of the "
-              "time on long passages.",
-    "usable": "Workable. Around 70 to 80% correct on long passages in "
-              "testing, lower on anything short.",
-    "thin": "Below the size where frequency measures settle. Roughly 45% "
-            "correct in testing, so the rhythm and punctuation figures are "
-            "worth more here than the function-word distance.",
-    "provisional": "Too little writing to measure properly. Structure is "
-                   "recorded and the shape of the writing is real, but the "
-                   "distance figures should not be trusted on their own.",
+    "stable": "Enough writing for both measures to hold. In testing this "
+              "size resolved the right author 70 to 95% of the time.",
+    "usable": "Workable. Around 45 to 62% correct in testing, well above "
+              "chance and enough to brief a writer with confidence.",
+    "thin": "Below the size where the word-frequency measure settles. "
+            "Identity is judged on character texture instead, which holds up "
+            "better here, but treat the figures as directional.",
+    "provisional": "Too little writing to measure properly. The shape of the "
+                   "writing is real and worth briefing from; the distance "
+                   "figures are not trustworthy on their own.",
 }
 
 
@@ -64,6 +66,7 @@ class Profile:
     consistency: dict[str, float] = field(default_factory=dict)
     function_words: dict[str, float] = field(default_factory=dict)
     char_ngrams: dict[str, float] = field(default_factory=dict)
+    texture: dict[str, dict[str, float]] = field(default_factory=dict)
     punct_shapes: dict[str, float] = field(default_factory=dict)
     signature: dict = field(default_factory=dict)
     topics: list[str] = field(default_factory=list)
@@ -78,6 +81,7 @@ class Profile:
             "consistency": self.consistency,
             "function_words": self.function_words,
             "char_ngrams": self.char_ngrams,
+            "texture": self.texture,
             "punct_shapes": self.punct_shapes,
             "signature": self.signature,
             "topics": self.topics,
@@ -90,7 +94,7 @@ class Profile:
         p.scalars = {k: W.Estimate.from_dict(v)
                      for k, v in d.get("scalars", {}).items()}
         for key in ("categoricals", "consistency", "function_words",
-                    "char_ngrams", "punct_shapes", "signature"):
+                    "char_ngrams", "texture", "punct_shapes", "signature"):
             setattr(p, key, d.get(key, {}))
         p.topics = d.get("topics", [])
         p.exemplars = d.get("exemplars", [])
@@ -181,6 +185,7 @@ def _profile(texts: list[str], register: str,
         consistency=W.categorical_consistency(chunks),
         function_words=function_word_vector(pooled),
         char_ngrams=char_ngram_profile(pooled),
+        texture=TX.profile(pooled),
         punct_shapes=punctuation_shape(pooled),
         signature=sig.build(texts, baseline=baseline).as_dict(),
         topics=topic_words(pooled),

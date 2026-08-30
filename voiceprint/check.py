@@ -14,11 +14,10 @@ from . import text as T
 FAIL_Z = 2.5
 WARN_Z = 1.5
 
-# Below this the function-word figures are noise: measured attribution
-# accuracy on 400-word passages is 28% even against a large profile, against
-# 92% at 6,400 words. Short drafts are still checked on rhythm and
-# punctuation, but the distance is reported as unreliable.
-RELIABLE_WORDS = 800
+# Below this the function-word figures are noise, so identity falls to the
+# texture arm. Measured: on 400-word passages Delta manages 28% against 24
+# authors where texture reaches 65%.
+RELIABLE_WORDS = 500
 MIN_WORDS = 40
 
 # A rate that is zero in the profile and tiny in the draft is not evidence of
@@ -74,8 +73,13 @@ class Report:
     def to_markdown(self) -> str:
         d = self.distance
         L = [f"Voice distance {d.overall:.2f} ({d.verdict()}). "
-             f"Delta {d.delta:.2f}, scalars {d.scalar:.2f}, "
-             f"n-grams {d.ngram:.2f}.", ""]
+             f"Identity {d.identity:.2f} from {d.arm}, "
+             f"scalars {d.scalar:.2f}.", ""]
+        if d.arm == "texture":
+            L.append(f"Judged on character texture rather than word choice: "
+                     f"{d.support_words} words is too little for the "
+                     f"function-word measure to settle.")
+            L.append("")
         if not d.calibrated:
             L.append("No between-author reference was found, so the Delta "
                      "figure is a frequency-weighted distance rather than "
@@ -138,10 +142,10 @@ def against_profile(draft: str, profile: Profile) -> Report:
         report.findings.append(Finding(
             "NOTE", "length",
             f"{doc.n_words} words. Below {RELIABLE_WORDS} the function-word "
-            f"distance is unreliable, so the verdict rests mainly on rhythm "
-            f"and punctuation.",
-            "Judge this comparatively, against another draft, rather than "
-            "against the threshold."))
+            f"distance is unreliable, so identity is judged on character "
+            f"texture, which holds up better at this size.",
+            "Still worth reading comparatively, against another draft, "
+            "rather than against the threshold."))
 
     for dev in dist.worst:
         if abs(dev.z) < WARN_Z:
