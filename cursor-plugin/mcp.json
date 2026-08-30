@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "voiceprint": {
+      "command": "python",
+      "args": [
+        "-m",
+        "voiceprint.mcp"
+      ],
+      "env": {}
+    }
+  }
+}

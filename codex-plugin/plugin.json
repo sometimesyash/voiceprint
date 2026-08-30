@@ -1,0 +1,19 @@
+{
+  "name": "voiceprint",
+  "version": "0.1.0",
+  "description": "Measure how a person writes and hold generated prose to it, instead of guessing at their style.",
+  "skills": [
+    "building-a-voiceprint",
+    "writing-in-your-voice"
+  ],
+  "mcp": {
+    "voiceprint": {
+      "command": "python",
+      "args": [
+        "-m",
+        "voiceprint.mcp"
+      ],
+      "env": {}
+    }
+  }
+}
