@@ -72,9 +72,13 @@ class Report:
 
     def to_markdown(self) -> str:
         d = self.distance
-        L = [f"Voice distance {d.overall:.2f} ({d.verdict()}). "
-             f"Identity {d.identity:.2f} from {d.arm}, "
-             f"scalars {d.scalar:.2f}.", ""]
+        s = d.strangeness
+        head = f"Voice distance {d.overall:.2f} ({d.verdict()})."
+        if s is not None:
+            head += (f" About {s:.0%} of writing by other people sits this "
+                     f"close, at this length.")
+        L = [head, "", f"Identity {d.identity:.2f} from {d.arm}, "
+                       f"scalars {d.scalar:.2f}.", ""]
         if d.arm == "texture":
             L.append(f"Judged on character texture rather than word choice: "
                      f"{d.support_words} words is too little for the "

@@ -50,20 +50,26 @@ Exit code 0 means it passed. Anything else means you are not finished.
 
 ## What the numbers mean
 
-`Voice distance` aggregates identity, scalars and n-grams. Identity is the
-important one: it blends two measures, Delta over function words and texture
-over character n-grams, weighted by how much text there is. The report names
-which arm decided.
+`strangeness` is the figure to read. It says what share of writing by other
+people sits at least as close to the profile as this draft does, and it is
+comparable across lengths where the raw distance is not.
 
-- under 0.9, close
-- 0.9 to 1.5, acceptable
-- 1.5 to 2.7, drifting
-- above 2.7, off
+- 5% or less, close
+- 5 to 25%, acceptable
+- 25 to 50%, drifting
+- above 50%, off
 
-**These bands are uncalibrated.** They are useful for comparing two drafts of
-the same thing and unreliable as a pass mark. A stranger can land inside them.
-If you need certainty, compare drafts against each other rather than against
-the threshold.
+Lower is better. 5% means only one in twenty texts by other people land this
+near.
+
+The raw `Voice distance` is still reported, but it shrinks as text grows: a
+person's own 200-word passage scores around 2.3 while a stranger's 6,400-word
+passage scores around 1.0. Comparing raw figures across drafts of different
+lengths will mislead you. Compare strangeness instead.
+
+Identity blends two measures, Delta over function words and texture over
+character n-grams, weighted by how much text there is. The report names which
+arm decided.
 
 A draft under 500 words is judged on texture alone, and a profile under 1,500
 words cannot identify anyone. The report says so when either applies. See

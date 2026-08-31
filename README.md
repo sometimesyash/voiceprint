@@ -51,6 +51,22 @@ result `provisional`.
 absolutely. Asking which of two drafts is closer is a much easier question than
 asking whether one passes.
 
+## Reading a result
+
+Distance shrinks as text grows, so a raw figure is not comparable across
+lengths. A person's own 200-word passage scores about 2.3 where a stranger's
+6,400-word passage scores about 1.0, which means a fixed band would fail the
+author and pass the stranger.
+
+So the number to read is **strangeness**: the share of writing by other people
+that sits at least this close, at this draft's length. Under 5% is close, over
+50% is off. It is computed from `data/scale.json`, measured across the same 24
+authors.
+
+```
+strangeness 5%: that share of other people's writing sits this close at 132 words
+```
+
 ## Not enough writing?
 
 ```bash
@@ -198,14 +214,14 @@ does not have.
 ## Numbers that are still guesses
 
 Named so they are not mistaken for method. The aggregate weighting
-`0.45·identity + 0.35·scalar + 0.20·ngram`, the verdict bands at 0.6, 1.0 and
-1.8 times tolerance, the tolerance strictness curve in `blend.py`, and the
-materiality floors in `check.py`. Each is a defensible heuristic and none is
-calibrated.
+`0.45·identity + 0.35·scalar + 0.20·ngram`, the tolerance strictness curve in
+`blend.py`, and the materiality floors in `check.py`. Each is a defensible
+heuristic and none is calibrated.
 
 Measured, not guessed: the confidence tiers, the reliable-length threshold, the
-between-author dispersion behind Delta, and the floor, ceiling and cap of the
-two-arm weighting curve. All four come from `scripts/calibrate.py`.
+between-author dispersion behind Delta, the floor, ceiling and cap of the
+two-arm weighting curve, and the length-to-distance table that turns a raw
+figure into a percentile. All come from the scripts in `scripts/`.
 
 ## Reading
 

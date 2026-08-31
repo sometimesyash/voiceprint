@@ -32,6 +32,7 @@ from .texture import profile as texture_profile
 from .windows import Estimate
 
 BASELINE = Path(__file__).resolve().parent / "data" / "baseline.json"
+SCALE = Path(__file__).resolve().parent / "data" / "scale.json"
 
 # A feature identical across a few windows has not been shown to be invariant,
 # only unmeasured. Without a floor its spread is zero and one accident
@@ -58,6 +59,48 @@ def baseline() -> dict | None:
 
 def delta_is_calibrated() -> bool:
     return baseline() is not None
+
+
+@lru_cache(maxsize=1)
+def scale() -> dict | None:
+    """How the distance is distributed by passage length."""
+    try:
+        data = json.loads(SCALE.read_text(encoding="utf8"))
+    except Exception:
+        return None
+    return data if data.get("table") else None
+
+
+def _nearest_size(words: int, sizes: list[int]) -> str:
+    return str(min(sizes, key=lambda s: abs(s - words)))
+
+
+def strangeness(identity: float, words: int) -> float | None:
+    """Share of other-author texts that sit at least this close, 0 to 1.
+
+    Distance shrinks as text grows, so a raw figure means something different
+    at every length: at 200 words a person's own writing scores about 2.3,
+    while at 6,400 a stranger scores about 1.0. This converts the raw number
+    into how ordinary it is, which is comparable across lengths.
+
+    Low is good. 0.05 means only one in twenty texts by other people sit as
+    close as this one.
+    """
+    data = scale()
+    if not data or not words:
+        return None
+    row = data["table"].get(_nearest_size(words, data["sizes"]))
+    if not row:
+        return None
+    quantiles = sorted((float(p), v) for p, v in row["other"].items())
+    if identity <= quantiles[0][1]:
+        return round(quantiles[0][0], 3)
+    for (p_low, v_low), (p_high, v_high) in zip(quantiles, quantiles[1:]):
+        if identity <= v_high:
+            span = v_high - v_low
+            frac = (identity - v_low) / span if span else 0.0
+            return round(p_low + frac * (p_high - p_low), 3)
+    return round(quantiles[-1][0], 3)
 
 
 @dataclass
@@ -91,6 +134,7 @@ class Distance:
     texture: float = 0.0
     delta_weight: float = 1.0
     support_words: int = 0
+    words: int = 0
 
     @property
     def identity(self) -> float:
@@ -106,7 +150,28 @@ class Distance:
             return "both"
         return "texture-led"
 
+    @property
+    def strangeness(self) -> float | None:
+        """How ordinary this distance is: the share of other-author texts
+        that sit at least this close, at this length. Low is good."""
+        return strangeness(self.identity, self.words)
+
     def verdict(self, tolerance: float = 1.5) -> str:
+        """Length-aware where possible, threshold-based where not.
+
+        The raw distance shrinks as text grows, so a fixed band means
+        something different at every length. Where the scale table is
+        available the verdict reads the percentile instead.
+        """
+        s = self.strangeness
+        if s is not None:
+            if s <= 0.05:
+                return "close"
+            if s <= 0.25:
+                return "acceptable"
+            if s <= 0.5:
+                return "drifting"
+            return "off"
         if self.overall <= tolerance * 0.6:
             return "close"
         if self.overall <= tolerance:
@@ -120,8 +185,9 @@ class Distance:
                 "identity": self.identity, "delta_weight": self.delta_weight,
                 "arm": self.arm, "scalar": self.scalar, "ngram": self.ngram,
                 "overall": self.overall, "verdict": self.verdict(),
+                "strangeness": self.strangeness,
                 "calibrated": self.calibrated,
-                "support_words": self.support_words,
+                "support_words": self.support_words, "words": self.words,
                 "worst": [d.as_dict() for d in self.worst]}
 
 
@@ -231,4 +297,4 @@ def measure(text: str, profile: Profile, worst: int = 8) -> Distance:
     overall = round(0.45 * identity + 0.35 * scalar + 0.20 * ngram, 4)
     devs.sort(key=lambda d: -abs(d.z))
     return Distance(delta, scalar, ngram, overall, devs[:worst], len(devs),
-                    calibrated, texture, weight, support)
+                    calibrated, texture, weight, support, doc.n_words)

@@ -132,9 +132,13 @@ def cmd_diff(args) -> int:
     draft = (Path(args.draft).read_text(encoding="utf8")
              if args.draft != "-" else sys.stdin.read())
     d = measure(draft, profile, worst=args.top)
+    s = d.strangeness
     print(f"identity {d.identity:.3f} from {d.arm}  "
           f"(delta {d.delta:.3f} weight {d.delta_weight:.2f}, "
           f"texture {d.texture:.3f})")
+    if s is not None:
+        print(f"strangeness {s:.0%}: that share of other people's writing "
+              f"sits this close at {d.words} words")
     print(f"scalars {d.scalar:.3f}  n-grams {d.ngram:.3f}  "
           f"overall {d.overall:.3f}  ({d.verdict()})")
     print(f"support {d.support_words} words\n")

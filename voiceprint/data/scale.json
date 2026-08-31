@@ -1,0 +1,119 @@
+{
+ "schema": 1,
+ "authors": 24,
+ "profile_words": 20000,
+ "trials_per_size": 50,
+ "sizes": [
+  200,
+  400,
+  800,
+  1600,
+  3200,
+  6400
+ ],
+ "table": {
+  "200": {
+   "same": {
+    "0.05": 1.6724,
+    "0.25": 2.0267,
+    "0.5": 2.3519,
+    "0.75": 2.6178,
+    "0.95": 3.0621
+   },
+   "other": {
+    "0.05": 1.9221,
+    "0.25": 2.3148,
+    "0.5": 2.5566,
+    "0.75": 2.8566,
+    "0.95": 3.2324
+   },
+   "overlap": 0.273
+  },
+  "400": {
+   "same": {
+    "0.05": 1.0992,
+    "0.25": 1.3519,
+    "0.5": 1.7059,
+    "0.75": 1.9089,
+    "0.95": 2.3903
+   },
+   "other": {
+    "0.05": 1.3191,
+    "0.25": 1.6991,
+    "0.5": 1.9469,
+    "0.75": 2.1534,
+    "0.95": 2.5544
+   },
+   "overlap": 0.243
+  },
+  "800": {
+   "same": {
+    "0.05": 0.7066,
+    "0.25": 0.9275,
+    "0.5": 1.1396,
+    "0.75": 1.3422,
+    "0.95": 1.7569
+   },
+   "other": {
+    "0.05": 0.9822,
+    "0.25": 1.2477,
+    "0.5": 1.4749,
+    "0.75": 1.6631,
+    "0.95": 2.0049
+   },
+   "overlap": 0.145
+  },
+  "1600": {
+   "same": {
+    "0.05": 0.535,
+    "0.25": 0.6827,
+    "0.5": 0.7896,
+    "0.75": 0.9728,
+    "0.95": 1.2557
+   },
+   "other": {
+    "0.05": 0.8035,
+    "0.25": 1.0137,
+    "0.5": 1.2024,
+    "0.75": 1.3781,
+    "0.95": 1.6271
+   },
+   "overlap": 0.037
+  },
+  "3200": {
+   "same": {
+    "0.05": 0.4792,
+    "0.25": 0.5488,
+    "0.5": 0.6416,
+    "0.75": 0.8077,
+    "0.95": 1.0077
+   },
+   "other": {
+    "0.05": 0.7489,
+    "0.25": 0.9068,
+    "0.5": 1.0511,
+    "0.75": 1.2243,
+    "0.95": 1.5051
+   },
+   "overlap": 0.005
+  },
+  "6400": {
+   "same": {
+    "0.05": 0.4857,
+    "0.25": 0.5573,
+    "0.5": 0.6431,
+    "0.75": 0.7677,
+    "0.95": 0.9054
+   },
+   "other": {
+    "0.05": 0.7924,
+    "0.25": 0.9287,
+    "0.5": 1.0423,
+    "0.75": 1.195,
+    "0.95": 1.4164
+   },
+   "overlap": 0.002
+  }
+ },
+ "note": "Distribution of blended identity distance by passage length, for texts by the same author and by others. Both arms shrink as text grows, so a raw distance is not comparable across lengths; percentile() in distance.py uses this to report how many other-author texts sit closer, which is length independent. Overlap is how often a different author scores at least as close as the median same-author text, and is the honest measure of separability at that length. Fiction, so working prose may differ."
+}

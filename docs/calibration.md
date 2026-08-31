@@ -71,6 +71,32 @@ points, which is inside the sampling error of forty trials.
 **Both sizes matter, independently.** A large profile does not rescue a short
 passage and a long passage does not rescue a small profile.
 
+## The number to read
+
+Raw distance is not comparable across lengths, because both arms shrink as
+text grows. Measured across 24 authors, the median distance for a text by the
+profile's own author:
+
+| passage | same author | different author | overlap |
+|---|---|---|---|
+| 200w | 2.35 | 2.56 | 27% |
+| 400w | 1.71 | 1.95 | 24% |
+| 800w | 1.14 | 1.47 | 14% |
+| 1,600w | 0.79 | 1.20 | 4% |
+| 3,200w | 0.64 | 1.05 | 0% |
+| 6,400w | 0.64 | 1.04 | 0% |
+
+A fixed band of 1.5 would therefore have failed a person's own 200-word text
+and passed a stranger's 6,400-word one, which is precisely backwards. The tool
+reports **strangeness** instead: the share of other-author texts sitting at
+least this close, read off this table at the draft's own length. Under 5% is
+close, over 50% is off.
+
+The overlap column is the honest measure of separability: how often a
+different author lands at least as near as the median same-author text. It
+reaches zero by 3,200 words and is 27% at 200, which is the real limit on
+short-text identification.
+
 ## Measured on real correspondence
 
 The fiction grid is a fair test but not a representative one. Against a real
@@ -114,6 +140,7 @@ between the arms shifts.
 
 ```bash
 python scripts/build_baseline.py --gutenberg   # 24 authors, ~2.5M words
-python scripts/calibrate.py                    # the tables above
+python scripts/calibrate.py                    # the arm tables
+python scripts/calibrate_scale.py              # the length table
 python scripts/discrimination.py               # against your own corpus
 ```
