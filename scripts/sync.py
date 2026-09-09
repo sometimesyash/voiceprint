@@ -51,8 +51,14 @@ HARNESSES = {
             "name": "voiceprint",
             "version": version(),
             "description": DESCRIPTION,
-            "author": {"name": "Yash Nairan"},
-            "mcpServers": {"voiceprint": MCP},
+            "author": {"name": "Yash"},
+            "mcpServers": {
+                "voiceprint": {
+                    "command": "python3",
+                    "args": ["${CLAUDE_PLUGIN_ROOT}/bin/voiceprint-mcp.py"],
+                    "env": {},
+                }
+            },
         },
     },
     "codex-plugin": {
