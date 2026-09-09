@@ -9,7 +9,7 @@ description = "Measure how a person writes, then hold generated prose to it"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
-authors = [{ name = "Yash Nairan" }]
+authors = [{ name = "Yash" }]
 keywords = ["stylometry", "idiolect", "authorship", "writing", "mcp"]
 classifiers = [
     "Development Status :: 3 - Alpha",

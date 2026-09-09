@@ -3,14 +3,13 @@
   "version": "0.1.0",
   "description": "Measure how a person writes and hold generated prose to it, instead of guessing at their style.",
   "author": {
-    "name": "Yash Nairan"
+    "name": "Yash"
   },
   "mcpServers": {
     "voiceprint": {
-      "command": "python",
+      "command": "python3",
       "args": [
-        "-m",
-        "voiceprint.mcp"
+        "${CLAUDE_PLUGIN_ROOT}/bin/voiceprint-mcp.py"
       ],
       "env": {}
     }

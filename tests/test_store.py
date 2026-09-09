@@ -78,7 +78,7 @@ class Store(unittest.TestCase):
             store.load("tester")
 
     def test_names_are_slugged(self):
-        self.assertEqual(store.slug("Yash Nairan"), "yash-nairan")
+        self.assertEqual(store.slug("Ada Lovelace"), "ada-lovelace")
         self.assertEqual(store.slug("  "), "default")
 
     def test_delete(self):
