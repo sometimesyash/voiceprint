@@ -44,6 +44,21 @@ MCP = {
     "env": {},
 }
 
+# claude-plugin can't ship a bin/ script (claude.ai-hosted plugins add bin/ to
+# PATH on the CLI but it doesn't show up on the admin approval surface), so
+# the install-check-and-launch logic that would otherwise live in a launcher
+# file is folded into an inline `python3 -c` argument instead.
+CLAUDE_PLUGIN_MCP_LAUNCHER = (
+    'import importlib.util, subprocess, sys\n'
+    'if importlib.util.find_spec("voiceprint") is None:\n'
+    '    sys.stderr.write(\n'
+    '        "voiceprint is not installed in this Python environment.\\n"\n'
+    '        "Run: pip install voiceprint\\n"\n'
+    '    )\n'
+    '    sys.exit(1)\n'
+    'sys.exit(subprocess.call([sys.executable, "-m", "voiceprint.mcp"]))\n'
+)
+
 HARNESSES = {
     "claude-plugin": {
         "manifest": ".claude-plugin/plugin.json",
@@ -55,7 +70,7 @@ HARNESSES = {
             "mcpServers": {
                 "voiceprint": {
                     "command": "python3",
-                    "args": ["${CLAUDE_PLUGIN_ROOT}/bin/voiceprint-mcp.py"],
+                    "args": ["-c", CLAUDE_PLUGIN_MCP_LAUNCHER],
                     "env": {},
                 }
             },
